@@ -4,6 +4,7 @@ const path = require('path')
 const { validationResult } = require('express-validator')
 
 const Post = require('../models/post')
+const { count } = require('console')
 
 const setStatusCode500 = (err) => {
   if (!err.statusCode) {
@@ -12,11 +13,22 @@ const setStatusCode500 = (err) => {
 }
 
 exports.getPosts = (req, res, next) => {
+  const currentPage = req.query.page || 1
+  const perPage = 2
+  let totalItems
   Post.find()
+    .countDocuments()
+    .then((count) => {
+      totalItems = count
+      return Post.find()
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage)
+    })
     .then((posts) => {
       res.status(200).json({
         message: 'All Posts Fetched!',
         posts: posts,
+        totalItems: totalItems,
       })
     })
     .catch((err) => {
