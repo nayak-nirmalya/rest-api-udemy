@@ -126,6 +126,31 @@ exports.updatePost = (req, res, next) => {
     })
 }
 
+exports.deletePost = (req, res, next) => {
+  const { postId } = req.params
+  Post.findById(postId)
+    .then((post) => {
+      if (!post) {
+        const error = new Error('could not find post.')
+        error.status = 404
+        throw error
+      }
+      //TODO: verify for login user
+      clearImage(post.imageUrl)
+      return Post.findByIdAndRemove(postId)
+    })
+    .then((result) => {
+      console.log('DELETED!')
+      res.status(200).json({
+        message: 'Deleted Post!',
+      })
+    })
+    .catch((err) => {
+      setStatusCode500(err)
+      next(err)
+    })
+}
+
 const clearImage = (filePath) => {
   filePath = path.join(__dirname, '..', 'images', filePath)
   fs.unlink(filePath, (err) => console.error('Deleted!'))
