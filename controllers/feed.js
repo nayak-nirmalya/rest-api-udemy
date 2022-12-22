@@ -2,11 +2,10 @@ const { validationResult } = require('express-validator')
 
 const Post = require('../models/post')
 
-const throwError = (err) => {
+const setStatusCode500 = (err) => {
   if (!err.statusCode) {
     err.statusCode = 500
   }
-  next(err)
 }
 
 exports.getPosts = (req, res, next) => {
@@ -17,7 +16,10 @@ exports.getPosts = (req, res, next) => {
         posts: posts,
       })
     })
-    .catch((err) => throwError(err))
+    .catch((err) => {
+      setStatusCode500(err)
+      next(err)
+    })
 }
 
 exports.createPost = (req, res, next) => {
@@ -27,13 +29,21 @@ exports.createPost = (req, res, next) => {
     error.statusCode = 422
     throw error
   }
-  const { title, content, imageUrl, creator } = req.body
+
+  if (!req.file) {
+    const error = new Error('No Images Provided!')
+    error.statusCode = 422
+    throw error
+  }
+  // const imageUrl = req.file.path.replace('\\', '/')
+  const imageUrl = req.file.filename
+  const { title, content, creator } = req.body
 
   // create a post in db
   const post = new Post({
     title: title,
     content: content,
-    imageUrl: 'imageUrl',
+    imageUrl: imageUrl,
     creator: { name: 'Nirmalya Nayak' },
   })
   post
@@ -45,7 +55,10 @@ exports.createPost = (req, res, next) => {
         post: result,
       })
     })
-    .catch((err) => throwError(err))
+    .catch((err) => {
+      setStatusCode500(err)
+      next(err)
+    })
 }
 
 exports.getPost = (req, res, next) => {
@@ -62,5 +75,8 @@ exports.getPost = (req, res, next) => {
         post: post,
       })
     })
-    .catch((err) => throwError(err))
+    .catch((err) => {
+      setStatusCode500(err)
+      next(err)
+    })
 }
