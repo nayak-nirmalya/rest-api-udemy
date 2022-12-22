@@ -40,7 +40,7 @@ exports.getPosts = (req, res, next) => {
 exports.createPost = (req, res, next) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    const error = new Error('validation failed!, entered data incorrect.')
+    const error = new Error('Validation Failed!, Entered Data Incorrect!')
     error.statusCode = 422
     throw error
   }
