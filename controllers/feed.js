@@ -133,6 +133,11 @@ exports.updatePost = (req, res, next) => {
         error.status = 404
         throw error
       }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not Authorized.')
+        error.status = 403
+        throw error
+      }
       if (imageUrl !== post.imageUrl) {
         clearImage(post.imageUrl)
       }
@@ -159,7 +164,11 @@ exports.deletePost = (req, res, next) => {
         error.status = 404
         throw error
       }
-      //TODO: verify for login user
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not Authorized.')
+        error.status = 403
+        throw error
+      }
       clearImage(post.imageUrl)
       return Post.findByIdAndRemove(postId)
     })
