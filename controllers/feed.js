@@ -4,7 +4,7 @@ const path = require('path')
 const { validationResult } = require('express-validator')
 
 const Post = require('../models/post')
-const { count } = require('console')
+const User = require('../models/user')
 
 const setStatusCode500 = (err) => {
   if (!err.statusCode) {
@@ -50,24 +50,36 @@ exports.createPost = (req, res, next) => {
     error.statusCode = 422
     throw error
   }
-  // const imageUrl = req.file.path.replace('\\', '/')
-  const imageUrl = req.file.filename
-  const { title, content, creator } = req.body
 
-  // create a post in db
+  const imageUrl = req.file.filename
+  const { title, content } = req.body
+  let creator
+
+  // create a post in db and save
   const post = new Post({
     title: title,
     content: content,
     imageUrl: imageUrl,
-    creator: { name: 'Nirmalya Nayak' },
+    creator: req.userId,
   })
   post
     .save()
     .then((result) => {
-      console.log(result)
+      return User.findById(req.userId)
+    })
+    .then((user) => {
+      creator = user
+      user.posts.push(post)
+      return user.save()
+    })
+    .then((result) => {
       res.status(201).json({
         message: 'Post Created Successfully.',
-        post: result,
+        post: post,
+        creator: {
+          _id: creator._id,
+          name: creator.name,
+        },
       })
     })
     .catch((err) => {
@@ -81,7 +93,7 @@ exports.getPost = (req, res, next) => {
   Post.findById(postId)
     .then((post) => {
       if (!post) {
-        const error = new Error('could not find post.')
+        const error = new Error('Could not Find Post.')
         error.status = 404
         throw error
       }
@@ -100,7 +112,7 @@ exports.updatePost = (req, res, next) => {
   const { postId } = req.params
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    const error = new Error('validation failed!, entered data incorrect.')
+    const error = new Error('Validation Failed!, Entered Data Incorrect.')
     error.statusCode = 422
     throw error
   }
@@ -117,7 +129,7 @@ exports.updatePost = (req, res, next) => {
   Post.findById(postId)
     .then((post) => {
       if (!post) {
-        const error = new Error('could not find post.')
+        const error = new Error('Could not Find Post.')
         error.status = 404
         throw error
       }
@@ -143,7 +155,7 @@ exports.deletePost = (req, res, next) => {
   Post.findById(postId)
     .then((post) => {
       if (!post) {
-        const error = new Error('could not find post.')
+        const error = new Error('Could not Find Post.')
         error.status = 404
         throw error
       }
