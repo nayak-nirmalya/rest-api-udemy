@@ -39,3 +39,31 @@ exports.signup = (req, res, next) => {
       next(err)
     })
 }
+
+exports.login = (req, res, next) => {
+  const { email, password } = req.body
+  let loadedUser
+  User.findOne({
+    email: email,
+  })
+    .then((user) => {
+      if (!user) {
+        const error = new Error('No User with this E-Mail Found!')
+        error.statusCode = 401
+        throw error
+      }
+      loadedUser = user
+      return bcrypt.compare(password, user.password)
+    })
+    .then((isEqual) => {
+      if (!isEqual) {
+        const error = new Error('Wrong Password!')
+        error.statusCode = 401
+        throw error
+      }
+    })
+    .catch((err) => {
+      setStatusCode500(err)
+      next(err)
+    })
+}
