@@ -37,46 +37,44 @@ exports.signup = async (req, res, next) => {
   }
 }
 
-exports.login = (req, res, next) => {
+exports.login = async (req, res, next) => {
   const { email, password } = req.body
   let loadedUser
-  User.findOne({
-    email: email,
-  })
-    .then((user) => {
-      if (!user) {
-        const error = new Error('No User with this E-Mail Found!')
-        error.statusCode = 401
-        throw error
-      }
-      loadedUser = user
-      return bcrypt.compare(password, user.password)
+  try {
+    const user = await User.findOne({
+      email: email,
     })
-    .then((isEqual) => {
-      if (!isEqual) {
-        const error = new Error('Wrong Password!')
-        error.statusCode = 401
-        throw error
-      }
-      const token = jwt.sign(
-        {
-          email: loadedUser.email,
-          userId: loadedUser._id.toString(),
-        },
-        'whythiskolaveridi',
-        {
-          expiresIn: '1h',
-        },
-      )
-      res.status(200).json({
-        token: token,
+    if (!user) {
+      const error = new Error('No User with this E-Mail Found!')
+      error.statusCode = 401
+      throw error
+    }
+    loadedUser = user
+    const isEqual = await bcrypt.compare(password, user.password)
+
+    if (!isEqual) {
+      const error = new Error('Wrong Password!')
+      error.statusCode = 401
+      throw error
+    }
+    const token = jwt.sign(
+      {
+        email: loadedUser.email,
         userId: loadedUser._id.toString(),
-      })
+      },
+      'whythiskolaveridi',
+      {
+        expiresIn: '1h',
+      },
+    )
+    res.status(200).json({
+      token: token,
+      userId: loadedUser._id.toString(),
     })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+  } catch (err) {
+    setStatusCode500(err)
+    next(err)
+  }
 }
 
 exports.getUserStatus = (req, res, next) => {

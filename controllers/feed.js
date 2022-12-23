@@ -168,7 +168,7 @@ exports.deletePost = async (req, res, next) => {
     res.status(200).json({
       message: 'Deleted Post!',
     })
-  } catch (error) {
+  } catch (err) {
     setStatusCode500(err)
     next(err)
   }
