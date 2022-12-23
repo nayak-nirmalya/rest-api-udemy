@@ -95,7 +95,7 @@ exports.getPost = async (req, res, next) => {
   }
 }
 
-exports.updatePost = (req, res, next) => {
+exports.updatePost = async (req, res, next) => {
   const { postId } = req.params
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -113,33 +113,32 @@ exports.updatePost = (req, res, next) => {
     error.statusCode = 422
     throw error
   }
-  Post.findById(postId)
-    .then((post) => {
-      if (!post) {
-        const error = new Error('Could not Find Post.')
-        error.status = 404
-        throw error
-      }
-      if (post.creator.toString() !== req.userId) {
-        const error = new Error('Not Authorized.')
-        error.status = 403
-        throw error
-      }
-      if (imageUrl !== post.imageUrl) {
-        clearImage(post.imageUrl)
-      }
-      post.title = title
-      post.imageUrl = imageUrl
-      post.content = content
-      return post.save()
-    })
-    .then((result) => {
-      res.status(200).json({ message: 'Post Updated!', post: result })
-    })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+
+  try {
+    const post = await Post.findById(postId)
+
+    if (!post) {
+      const error = new Error('Could not Find Post.')
+      error.status = 404
+      throw error
+    }
+    if (post.creator.toString() !== req.userId) {
+      const error = new Error('Not Authorized.')
+      error.status = 403
+      throw error
+    }
+    if (imageUrl !== post.imageUrl) {
+      clearImage(post.imageUrl)
+    }
+    post.title = title
+    post.imageUrl = imageUrl
+    post.content = content
+    await post.save()
+    res.status(200).json({ message: 'Post Updated!', post: post })
+  } catch (err) {
+    setStatusCode500(err)
+    next(err)
+  }
 }
 
 exports.deletePost = (req, res, next) => {
