@@ -10,7 +10,7 @@ const setStatusCode500 = (err) => {
   }
 }
 
-exports.signup = (req, res, next) => {
+exports.signup = async (req, res, next) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     const error = new Error('Validation Failed!, Entered Data Incorrect!')
@@ -19,26 +19,22 @@ exports.signup = (req, res, next) => {
     throw error
   }
   const { email, name, password } = req.body
-  bcrypt
-    .hash(password, 12)
-    .then((hashedPassword) => {
-      const user = new User({
-        email: email,
-        password: hashedPassword,
-        name: name,
-      })
-      return user.save()
+  try {
+    const hashedPassword = await bcrypt.hash(password, 12)
+    const user = new User({
+      email: email,
+      password: hashedPassword,
+      name: name,
     })
-    .then((result) => {
-      res.status(201).json({
-        message: 'New User Created!',
-        userId: result._id,
-      })
+    const result = await user.save()
+    res.status(201).json({
+      message: 'New User Created!',
+      userId: result._id,
     })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+  } catch (err) {
+    setStatusCode500(err)
+    next(err)
+  }
 }
 
 exports.login = (req, res, next) => {
