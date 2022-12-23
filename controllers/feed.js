@@ -78,22 +78,21 @@ exports.createPost = async (req, res, next) => {
 
 exports.getPost = async (req, res, next) => {
   const { postId } = req.params
-  Post.findById(postId)
-    .then((post) => {
-      if (!post) {
-        const error = new Error('Could not Find Post.')
-        error.status = 404
-        throw error
-      }
-      res.status(200).json({
-        message: 'Post Fetched!',
-        post: post,
-      })
+  const post = await Post.findById(postId)
+  try {
+    if (!post) {
+      const error = new Error('Could not Find Post.')
+      error.status = 404
+      throw error
+    }
+    res.status(200).json({
+      message: 'Post Fetched!',
+      post: post,
     })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+  } catch (err) {
+    setStatusCode500(err)
+    next(err)
+  }
 }
 
 exports.updatePost = (req, res, next) => {
