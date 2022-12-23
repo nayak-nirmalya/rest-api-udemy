@@ -77,22 +77,21 @@ exports.login = async (req, res, next) => {
   }
 }
 
-exports.getUserStatus = (req, res, next) => {
-  User.findById(req.userId)
-    .then((user) => {
-      if (!user) {
-        const error = new Error('User not Found!')
-        error.statusCode = 404
-        throw error
-      }
-      res.status(200).json({
-        status: user.status,
-      })
+exports.getUserStatus = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId)
+    if (!user) {
+      const error = new Error('User not Found!')
+      error.statusCode = 404
+      throw error
+    }
+    res.status(200).json({
+      status: user.status,
     })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+  } catch (err) {
+    setStatusCode500(err)
+    next(err)
+  }
 }
 
 exports.updateUserStatus = (req, res, next) => {
