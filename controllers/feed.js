@@ -33,7 +33,7 @@ exports.getPosts = async (req, res, next) => {
   }
 }
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     const error = new Error('Validation Failed!, Entered Data Incorrect!')
@@ -49,7 +49,6 @@ exports.createPost = (req, res, next) => {
 
   const imageUrl = req.file.filename
   const { title, content } = req.body
-  let creator
 
   // create a post in db and save
   const post = new Post({
@@ -58,33 +57,26 @@ exports.createPost = (req, res, next) => {
     imageUrl: imageUrl,
     creator: req.userId,
   })
-  post
-    .save()
-    .then((result) => {
-      return User.findById(req.userId)
+  try {
+    await post.save()
+    const user = await User.findById(req.userId)
+    user.posts.push(post)
+    await user.save()
+    res.status(201).json({
+      message: 'Post Created Successfully.',
+      post: post,
+      creator: {
+        _id: user._id,
+        name: user.name,
+      },
     })
-    .then((user) => {
-      creator = user
-      user.posts.push(post)
-      return user.save()
-    })
-    .then((result) => {
-      res.status(201).json({
-        message: 'Post Created Successfully.',
-        post: post,
-        creator: {
-          _id: creator._id,
-          name: creator.name,
-        },
-      })
-    })
-    .catch((err) => {
-      setStatusCode500(err)
-      next(err)
-    })
+  } catch (error) {
+    setStatusCode500(error)
+    next(error)
+  }
 }
 
-exports.getPost = (req, res, next) => {
+exports.getPost = async (req, res, next) => {
   const { postId } = req.params
   Post.findById(postId)
     .then((post) => {
