@@ -133,8 +133,8 @@ exports.updatePost = async (req, res, next) => {
     post.title = title
     post.imageUrl = imageUrl
     post.content = content
-    await post.save()
-    res.status(200).json({ message: 'Post Updated!', post: post })
+    const result = await post.save()
+    res.status(200).json({ message: 'Post Updated!', post: result })
   } catch (err) {
     setStatusCode500(err)
     next(err)
